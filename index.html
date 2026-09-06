@@ -3145,6 +3145,8 @@
     }
     addCountRow('日勤 看護師(常勤)', d => members.filter(mem => countablePool(mem) && assignments[getKey(y,m,d,mem.id)]==='day').length, (n,d) => n < (isWeekend(y,m,d) ? weekendDayReq : dayReq));
     addCountRow('日勤 介護士', d => members.filter(mem => mem.role==='care' && assignments[getKey(y,m,d,mem.id)]==='day').length, n => n < careDayReq);
+    // 職種を問わず、その日1日に日勤で出勤している人数の合計(日によっての偏りが無いか一目で確認できるように)
+    addCountRow('日勤 合計', d => members.filter(mem => assignments[getKey(y,m,d,mem.id)]==='day').length);
     addCountRow('夜勤 看護師', d => members.filter(mem => inPool(mem) && assignments[getKey(y,m,d,mem.id)]==='night').length, n => n < nightReq);
 
     table.appendChild(tbody);
