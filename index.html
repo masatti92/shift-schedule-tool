@@ -133,8 +133,9 @@
   <div style="width:52px; height:52px; margin:0 auto 14px; border-radius:16px; background:var(--color-accent-soft); display:flex; align-items:center; justify-content:center; font-size:24px;">🗓️</div>
   <h1 style="margin-bottom:4px;">勤務表自動作成ツール</h1>
   <p style="font-size:13px; color:var(--color-text-secondary); margin:0 0 20px;">何月の勤務表を作成しますか?</p>
-  <div style="display:flex; justify-content:center; margin-bottom:20px;">
-    <input type="month" id="monthSetupInput" style="font-size:16px; padding:10px 12px; width:200px; text-align:center;">
+  <div style="display:flex; justify-content:center; gap:8px; margin-bottom:20px;">
+    <select id="monthSetupYear" style="font-size:16px; padding:10px 8px; text-align:center;"></select>
+    <select id="monthSetupMonth" style="font-size:16px; padding:10px 8px; text-align:center;"></select>
   </div>
   <button id="monthSetupConfirmBtn" style="width:100%; font-size:14px; padding:11px 28px;">この月で始める</button>
   <p style="font-size:11px; color:var(--color-text-tertiary); margin:16px 0 0;">💡 ブラウザのメニューから「ホーム画面に追加」すると、アプリのように起動できます</p>
@@ -404,7 +405,8 @@
 
   const appEl = document.getElementById('app');
   const monthSetupView = document.getElementById('monthSetupView');
-  const monthSetupInput = document.getElementById('monthSetupInput');
+  const monthSetupYear = document.getElementById('monthSetupYear');
+  const monthSetupMonth = document.getElementById('monthSetupMonth');
   const monthLabel = document.getElementById('monthLabel');
   const legend = document.getElementById('legend');
   const inputGrid = document.getElementById('inputGrid');
@@ -3983,20 +3985,34 @@
   }
   // アプリを開いた直後だけ「何月の勤務表を作るか」を選ぶ画面を挟む。その後の月移動は
   // 従来どおり「‹ ›」ボタンで直接切り替える(月を変更するたびに毎回この画面には戻らない)。
-  function formatMonthInputValue(date){
-    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
-  }
+  // ブラウザによって<input type="month">の見た目・操作感がバラバラ(自由入力に見えてしまう
+  // 環境もある)なため、年・月それぞれをプルダウンで選ぶ方式にしている。
   function showMonthSetupView(){
-    monthSetupInput.value = formatMonthInputValue(currentDate);
+    const y = currentDate.getFullYear();
+    const m = currentDate.getMonth();
+    monthSetupYear.innerHTML = '';
+    for(let yy = y - 2; yy <= y + 2; yy++){
+      const opt = document.createElement('option');
+      opt.value = String(yy);
+      opt.textContent = `${yy}年`;
+      if(yy === y) opt.selected = true;
+      monthSetupYear.appendChild(opt);
+    }
+    monthSetupMonth.innerHTML = '';
+    for(let mm = 1; mm <= 12; mm++){
+      const opt = document.createElement('option');
+      opt.value = String(mm);
+      opt.textContent = `${mm}月`;
+      if(mm === m+1) opt.selected = true;
+      monthSetupMonth.appendChild(opt);
+    }
     appEl.style.display = 'none';
     monthSetupView.style.display = '';
   }
   document.getElementById('monthSetupConfirmBtn').addEventListener('click', () => {
-    const val = monthSetupInput.value; // "YYYY-MM"形式
-    if(val){
-      const [yy, mm] = val.split('-').map(Number);
-      if(yy && mm){ currentDate = new Date(yy, mm-1, 1); }
-    }
+    const yy = parseInt(monthSetupYear.value, 10);
+    const mm = parseInt(monthSetupMonth.value, 10);
+    if(yy && mm){ currentDate = new Date(yy, mm-1, 1); }
     disarmClearAllWishes(); // 月を変えると確認中の件数表示が古くなるため、確認状態は解除する
     disarmClearAllManual();
     monthSetupView.style.display = 'none';
