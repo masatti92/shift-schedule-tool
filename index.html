@@ -177,7 +177,7 @@
       <p style="font-size:13px; color:var(--color-text-secondary); margin:0;">各日のセルをクリックして、希望シフトまたはNG(出勤不可)を設定してください。</p>
       <div style="display:flex; gap:6px; flex-wrap:wrap;">
         <button id="clearAllWishesBtn" style="font-size:12px; padding:6px 10px; min-height:32px; flex-shrink:0;">この月の希望をすべてクリア</button>
-        <button id="clearAllManualBtn" style="font-size:12px; padding:6px 10px; min-height:32px; flex-shrink:0;">この月の確定(業務調整)をすべてクリア</button>
+        <button id="clearAllManualBtn" style="font-size:12px; padding:6px 10px; min-height:32px; flex-shrink:0;">この月の勤務調整をすべてクリア</button>
       </div>
     </div>
     <div id="roleFilter" style="display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap;"></div>
@@ -185,7 +185,7 @@
   </div>
 
   <div id="resultView" style="display:none;">
-    <p style="font-size:13px; color:var(--color-text-secondary); margin:0 0 8px;">セルをクリックすると割り振りを手動で変更できます。二重下線=本人の希望どおり、紫の太枠=業務調整のため手動で変更したセル(自動割り振りでも保護されます)。</p>
+    <p style="font-size:13px; color:var(--color-text-secondary); margin:0 0 8px;">セルをクリックすると割り振りを手動で変更できます。二重下線=本人の希望どおり、枠線=希望休、セル上部の「・」=勤務調整のため手動で変更したセル(自動割り振りでも保護されます)。</p>
     <div id="resultGrid" class="app-surface" style="overflow-x:auto; margin-bottom:1rem;"></div>
     <div id="warnings" style="margin-bottom:1rem;"></div>
     <div id="summaryGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:12px;"></div>
@@ -808,6 +808,13 @@
           cell.textContent = '-';
           cell.style.color = 'var(--color-text-tertiary)';
         }
+        // 希望休(休み・有給・リフレッシュ休暇の希望)は、枠線で囲んで一目で分かるようにする。
+        if(!manualEdit[key] && pref && pref.wish){
+          const wishSt = shiftTypes.find(s => s.id === pref.wish);
+          if(wishSt && wishSt.isOff){
+            cell.style.border = `1.5px solid ${cv('c-gray',600)}`;
+          }
+        }
         // 夜勤希望が夜勤NGペアの相手と同日に重なっている場合、セルに警告マークを重ねて表示する。
         if(pref && !pref.ng && pref.wish === 'night'){
           const conflictPartners = nightNgWishConflictPartners(mem.id, y, m, d);
@@ -821,12 +828,16 @@
             cell.appendChild(badge);
           }
         }
-        // 師長が業務調整として確定させたセルは、希望とは別に枠線で分かるようにする
+        // 師長が勤務調整として確定させたセルは、希望とは別にセル上部の「・」で分かるようにする
         // (割り振り結果画面の表示と同じ考え方。希望入力画面からでも一目で分かるようにする)。
         if(manualEdit[key]){
-          cell.style.border = `2px solid ${cv('c-purple',600)}`;
+          cell.style.position = 'relative';
+          const dot = document.createElement('span');
+          dot.textContent = '・';
+          dot.style.cssText = `position:absolute; top:0px; left:50%; transform:translateX(-50%); font-size:13px; font-weight:900; line-height:1; color:${cv('c-purple',600)};`;
+          cell.appendChild(dot);
           const confirmedSt = shiftTypes.find(s => s.id === assignments[key]);
-          const manualTitle = `業務調整で確定済み: ${confirmedSt ? confirmedSt.name : ''} (クリックで確認・変更)`;
+          const manualTitle = `勤務調整済み: ${confirmedSt ? confirmedSt.name : ''} (クリックで確認・変更)`;
           cell.title = cell.title ? `${cell.title} ／ ${manualTitle}` : manualTitle;
         }
         cell.addEventListener('click', () => openPrefModal(y,m,d,mem));
@@ -865,7 +876,7 @@
     const key = getKey(y,m,d,member.id);
     const daysInThisMonth = daysInMonth(y,m);
     const weekdayNames = ['日','月','火','水','木','金','土'];
-    let mode = 'wish'; // 'wish' = 本人の希望を入力 / 'confirm' = 師長が業務調整として確定
+    let mode = 'wish'; // 'wish' = 本人の希望を入力 / 'confirm' = 師長が勤務調整として設定
 
     const title = document.createElement('p');
     title.style.cssText = `font-weight:500; font-size:16px; margin:0 0 10px;`;
@@ -880,7 +891,7 @@
     const wishTabBtn = document.createElement('button');
     wishTabBtn.textContent = '本人の希望';
     const confirmTabBtn = document.createElement('button');
-    confirmTabBtn.textContent = '業務調整で確定(師長用)';
+    confirmTabBtn.textContent = '勤務調整(師長用)';
     [wishTabBtn, confirmTabBtn].forEach(b => { b.style.cssText = `flex:1; padding:8px 6px; font-size:12px;`; });
     modeTabs.appendChild(wishTabBtn);
     modeTabs.appendChild(confirmTabBtn);
@@ -945,8 +956,8 @@
         const p = document.createElement('p');
         p.style.cssText = `font-size:12px; color:${cv('c-purple',800)}; background:${cv('c-purple',50)}; border-radius:var(--border-radius-md); padding:6px 10px; margin:0 0 8px;`;
         p.textContent = manualEdit[key]
-          ? `現在の確定(業務調整): ${(shiftTypes.find(s => s.id === assignments[key]) || {}).name || ''}。選び直すと上書きされます。`
-          : 'タイルを選ぶと、本人の希望とは別にこの日の勤務を直接確定します(自動割り振りでも保持されます)。';
+          ? `現在の勤務調整: ${(shiftTypes.find(s => s.id === assignments[key]) || {}).name || ''}。選び直すと上書きされます。`
+          : 'タイルを選ぶと、本人の希望とは別にこの日の勤務を「勤務調整」として直接設定します(自動割り振りでも保持されます)。';
         statusArea.appendChild(p);
       }
       if(nightNgConflicts.length > 0){
@@ -3056,14 +3067,25 @@
         } else {
           cell.title = isWished ? '希望どおり (クリックで変更)' : 'クリックで変更';
         }
+        // 希望休(休み・有給・リフレッシュ休暇の希望)は、枠線で囲んで一目で分かるようにする。
+        if(!manualEdit[key] && pref && pref.wish){
+          const wishSt = shiftTypes.find(s => s.id === pref.wish);
+          if(wishSt && wishSt.isOff){
+            cell.style.border = `1.5px solid ${cv('c-gray',600)}`;
+          }
+        }
         if(isTodayLeader){
           cell.title += ' ／ 本日の日勤リーダー';
         }
-        // 業務調整のため手動で変更したセルは、枠線を目立たせて他と区別する
-        // (本人の希望どおりかどうかを示す二重下線とは独立した表示)。
+        // 師長が勤務調整のため手動で変更したセルは、セル上部の「・」で他と区別する
+        // (本人の希望どおりかどうかを示す二重下線とも、希望休の枠線とも独立した表示)。
         if(manualEdit[key]){
-          cell.style.border = `2px solid ${cv('c-purple',600)}`;
-          cell.title = '業務調整のため手動で変更されています (自動割り振りでも保護されます)';
+          cell.style.position = 'relative';
+          const dot = document.createElement('span');
+          dot.textContent = '・';
+          dot.style.cssText = `position:absolute; top:0px; left:50%; transform:translateX(-50%); font-size:13px; font-weight:900; line-height:1; color:${cv('c-purple',600)};`;
+          cell.appendChild(dot);
+          cell.title = '勤務調整のため手動で変更されています (自動割り振りでも保護されます)';
           if(isTodayLeader) cell.title += ' ／ 本日の日勤リーダー';
         }
         cell.addEventListener('click', () => openResultEditModal(y,m,d,mem));
@@ -3145,7 +3167,7 @@
     const sub = document.createElement('p');
     sub.style.cssText = `font-size:13px; color:var(--color-text-secondary); margin:0 0 12px;`;
     sub.textContent = manualEdit[key]
-      ? '業務調整のため手動で設定されています。自動割り振りをやり直しても上書きされません。'
+      ? '勤務調整のため手動で設定されています。自動割り振りをやり直しても上書きされません。'
       : (locked[key] ? '夜勤の連動ルールで自動設定された割り振りです。変更すると連動は解除されます。' : '割り振りを手動で変更できます');
     modalContent.appendChild(sub);
 
@@ -4064,7 +4086,7 @@
   function disarmClearAllManual(){
     clearAllManualArmed = false;
     if(clearAllManualTimer){ clearTimeout(clearAllManualTimer); clearAllManualTimer = null; }
-    clearAllManualBtn.textContent = 'この月の確定(業務調整)をすべてクリア';
+    clearAllManualBtn.textContent = 'この月の勤務調整をすべてクリア';
     clearAllManualBtn.style.borderColor = '';
     clearAllManualBtn.style.color = '';
   }
