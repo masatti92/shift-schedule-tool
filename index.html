@@ -582,7 +582,7 @@
 
     function makeTile({ colorKey, label, selected, onClick }){
       const tile = document.createElement('button');
-      tile.style.cssText = `display:flex; align-items:center; justify-content:center; min-height:56px; padding:10px 4px; border:2px solid ${cv(colorKey,600)}; border-radius:var(--border-radius-md); background:${selected ? cv(colorKey,50) : 'var(--color-background-primary)'}; color:${cv(colorKey,800)}; font-size:14px; font-weight:600; text-align:center;`;
+      tile.style.cssText = `display:flex; align-items:center; justify-content:center; min-height:56px; padding:10px 4px; border:2px solid ${cv(colorKey,600)}; border-radius:var(--border-radius-md); background:${selected ? cv(colorKey,600) : cv(colorKey,50)}; color:${selected ? '#fff' : cv(colorKey,800)}; font-size:14px; font-weight:600; text-align:center;`;
       tile.textContent = label;
       tile.addEventListener('click', onClick);
       grid.appendChild(tile);
@@ -981,7 +981,7 @@
 
       function makeTile({ colorKey, label, selected, warn, onClick }){
         const tile = document.createElement('button');
-        tile.style.cssText = `position:relative; display:flex; align-items:center; justify-content:center; min-height:56px; padding:10px 4px; border:2px solid ${cv(colorKey,600)}; border-radius:var(--border-radius-md); background:${selected ? cv(colorKey,50) : 'var(--color-background-primary)'}; color:${cv(colorKey,800)}; font-size:14px; font-weight:600; text-align:center;`;
+        tile.style.cssText = `position:relative; display:flex; align-items:center; justify-content:center; min-height:56px; padding:10px 4px; border:2px solid ${cv(colorKey,600)}; border-radius:var(--border-radius-md); background:${selected ? cv(colorKey,600) : cv(colorKey,50)}; color:${selected ? '#fff' : cv(colorKey,800)}; font-size:14px; font-weight:600; text-align:center;`;
         tile.textContent = label;
         if(warn){
           const badge = document.createElement('span');
