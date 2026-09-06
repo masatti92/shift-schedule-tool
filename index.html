@@ -185,7 +185,7 @@
   </div>
 
   <div id="resultView" style="display:none;">
-    <p style="font-size:13px; color:var(--color-text-secondary); margin:0 0 8px;">セルをクリックすると割り振りを手動で変更できます。二重下線=本人の希望どおり、枠線=希望休、セル上部の「・」=勤務調整のため手動で変更したセル(自動割り振りでも保護されます)。</p>
+    <p style="font-size:13px; color:var(--color-text-secondary); margin:0 0 8px;">セルをクリックすると割り振りを手動で変更できます。二重下線=本人の希望どおり、枠線=本人の希望、セル上部の「・」=勤務調整のため手動で変更したセル(自動割り振りでも保護されます)。</p>
     <div id="resultGrid" class="app-surface" style="overflow-x:auto; margin-bottom:1rem;"></div>
     <div id="warnings" style="margin-bottom:1rem;"></div>
     <div id="summaryGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:12px;"></div>
@@ -808,12 +808,10 @@
           cell.textContent = '-';
           cell.style.color = 'var(--color-text-tertiary)';
         }
-        // 希望休(休み・有給・リフレッシュ休暇の希望)は、枠線で囲んで一目で分かるようにする。
+        // 本人の希望(休み等の希望休だけでなく、日勤・夜勤等の希望の勤務も含む)は、
+        // 枠線で囲んで一目で分かるようにする。
         if(!manualEdit[key] && pref && pref.wish){
-          const wishSt = shiftTypes.find(s => s.id === pref.wish);
-          if(wishSt && wishSt.isOff){
-            cell.style.border = `1.5px solid ${cv('c-gray',600)}`;
-          }
+          cell.style.border = `1.5px solid ${cv('c-gray',600)}`;
         }
         // 夜勤希望が夜勤NGペアの相手と同日に重なっている場合、セルに警告マークを重ねて表示する。
         if(pref && !pref.ng && pref.wish === 'night'){
@@ -3067,12 +3065,10 @@
         } else {
           cell.title = isWished ? '希望どおり (クリックで変更)' : 'クリックで変更';
         }
-        // 希望休(休み・有給・リフレッシュ休暇の希望)は、枠線で囲んで一目で分かるようにする。
+        // 本人の希望(休み等の希望休だけでなく、日勤・夜勤等の希望の勤務も含む)は、
+        // 枠線で囲んで一目で分かるようにする。
         if(!manualEdit[key] && pref && pref.wish){
-          const wishSt = shiftTypes.find(s => s.id === pref.wish);
-          if(wishSt && wishSt.isOff){
-            cell.style.border = `1.5px solid ${cv('c-gray',600)}`;
-          }
+          cell.style.border = `1.5px solid ${cv('c-gray',600)}`;
         }
         if(isTodayLeader){
           cell.title += ' ／ 本日の日勤リーダー';
