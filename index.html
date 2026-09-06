@@ -2202,6 +2202,16 @@
     trimOverTargets();
     backfillOffTargets();
 
+    // その日の日勤に実際に入っている人数(看護師の必要人数対象者・パート/育短・新人・介護福祉士の
+    // 全員を含む「出勤スタッフ総数」)。以下のパート/育短・新人・介護福祉士の調整では、
+    // 自分の職種内の人数だけでなく、この総数を見て「薄い日を優先的に埋め、厚い日から優先的に外す」
+    // ことで、看護師の必要人数以外のスタッフも含めた1日あたりの出勤人数を平坦化する。
+    function totalDayHeadcount(d){
+      let c = 0;
+      members.forEach(mem => { if(assignments[getKey(y,m,d,mem.id)] === dayType.id) c++; });
+      return c;
+    }
+
     // パート・育短も休みの日数は確定値。必要人数の対象外(countableSetに含まれない)なので
     // 人数不足のチェックは不要で、単純に超過を削り不足を埋めるだけでよい。
     // ただし5連勤にはしない方針のため、上限はMAX_CONSEC-1(4連勤)を使う。
@@ -2217,9 +2227,8 @@
             const key = getKey(y,m,d,mem.id);
             if(assignments[key] !== dayType.id) continue;
             if(locked[key]) continue;
-            let c = 0;
-            weekdayLimitedMembers.forEach(other => { if(assignments[getKey(y,m,d,other.id)] === dayType.id) c++; });
-            if(c > bestCount){ bestCount = c; best = d; } // 一番人数が多い日から優先的に外す
+            const c = totalDayHeadcount(d);
+            if(c > bestCount){ bestCount = c; best = d; } // 全体の出勤人数が一番多い日から優先的に外す
           }
           if(best === null) break;
           assignments[getKey(y,m,best,mem.id)] = offType.id;
@@ -2244,9 +2253,8 @@
             if(locked[key]) continue;
             if(mem.sundayOff && new Date(y,m,d).getDay() === 0) continue; // 日曜固定休みの日は動かさない
             if(consecRunIfWorking(mem, d) > MAX_CONSEC - 1) continue; // パート・育短は4連勤まで
-            let c = 0;
-            weekdayLimitedMembers.forEach(other => { if(assignments[getKey(y,m,d,other.id)] === dayType.id) c++; });
-            if(c < bestCount){ bestCount = c; best = d; }
+            const c = totalDayHeadcount(d);
+            if(c < bestCount){ bestCount = c; best = d; } // 全体の出勤人数が一番薄い日から優先的に埋める
           }
           if(best === null) break;
           assignments[getKey(y,m,best,mem.id)] = dayType.id;
@@ -2273,9 +2281,8 @@
             const key = getKey(y,m,d,mem.id);
             if(assignments[key] !== dayType.id) continue;
             if(locked[key]) continue;
-            let c = 0;
-            newbieMembers.forEach(other => { if(assignments[getKey(y,m,d,other.id)] === dayType.id) c++; });
-            if(c > bestCount){ bestCount = c; best = d; } // 一番人数が多い日から優先的に外す
+            const c = totalDayHeadcount(d);
+            if(c > bestCount){ bestCount = c; best = d; } // 全体の出勤人数が一番多い日から優先的に外す
           }
           if(best === null) break;
           assignments[getKey(y,m,best,mem.id)] = offType.id;
@@ -2300,9 +2307,8 @@
             if(locked[key]) continue;
             if(mem.sundayOff && new Date(y,m,d).getDay() === 0) continue; // 日曜固定休みの日は動かさない
             if(consecRunIfWorking(mem, d) > MAX_CONSEC - 1) continue; // 新人は4連勤まで
-            let c = 0;
-            newbieMembers.forEach(other => { if(assignments[getKey(y,m,d,other.id)] === dayType.id) c++; });
-            if(c < bestCount){ bestCount = c; best = d; }
+            const c = totalDayHeadcount(d);
+            if(c < bestCount){ bestCount = c; best = d; } // 全体の出勤人数が一番薄い日から優先的に埋める
           }
           if(best === null) break;
           assignments[getKey(y,m,best,mem.id)] = dayType.id;
@@ -2330,10 +2336,10 @@
             if(assignments[key] !== dayType.id) continue;
             if(locked[key]) continue;
             workDays.push(d);
-            let c = 0;
-            careStaff.forEach(other => { if(assignments[getKey(y,m,d,other.id)] === dayType.id) c++; });
-            if(c - 1 < careDayReqLocal) continue; // 外すと必要人数を割る
-            const slack = c - careDayReqLocal;
+            let careC = 0;
+            careStaff.forEach(other => { if(assignments[getKey(y,m,d,other.id)] === dayType.id) careC++; });
+            if(careC - 1 < careDayReqLocal) continue; // 外すと介護福祉士の必要人数を割る
+            const slack = totalDayHeadcount(d); // 全体の出勤人数が一番多い日から優先的に外す
             if(slack > bestSlack){ bestSlack = slack; best = d; }
           }
           if(best !== null){
@@ -2386,9 +2392,8 @@
             if(locked[key]) continue;
             if(justHadAke(mem,d)) continue; // 明けの翌日は日勤に戻さない(休みがデフォルト)
             if(consecRunIfWorking(mem, d) > MAX_CONSEC - 1) continue; // 介護福祉士は4連勤まで
-            let c = 0;
-            careStaff.forEach(other => { if(assignments[getKey(y,m,d,other.id)] === dayType.id) c++; });
-            if(c < bestCount){ bestCount = c; best = d; }
+            const c = totalDayHeadcount(d);
+            if(c < bestCount){ bestCount = c; best = d; } // 全体の出勤人数が一番薄い日から優先的に埋める
           }
           if(best === null) break;
           assignments[getKey(y,m,best,mem.id)] = dayType.id;
