@@ -1676,6 +1676,26 @@
             if(mem.nightLeader) nleaderFilled++;
           }
         }
+        // 上記までの候補(available)は、夜勤専従が月内で偏りなく夜勤に入れるよう、
+        // 按分上限(nightOnlyPacedCap)を超える人を除外している。それでも人数が足りない
+        // 場合は、按分の目安より優先して必要人数を満たすべきなので、月間上限(nightOnlyMax)
+        // までは按分を無視して夜勤専従を追加候補にする。これにより、他に調整が難しいときは
+        // 「夜勤→明け→夜勤→明け」のように夜勤専従を続けて夜勤に入れることも許容する。
+        if(filled < req){
+          let candidates = countableNurses.filter(mem =>
+            mem.nightOnly && !assignedToday.has(mem.id) && !isNG(mem,d) &&
+            canStartNight(mem) && canNight(mem) && nightOnlyCount[mem.id] < nightOnlyMax
+          );
+          candidates.sort(nightSort);
+          for(const mem of candidates){
+            if(filled >= req) break;
+            lastWarnings.push(`${m+1}/${d}: ${mem.name} を按分の目安を超えて夜勤に配置（他に調整が難しく、夜勤人員不足のため）`);
+            assignments[getKey(y,m,d,mem.id)] = nightType.id;
+            assignedToday.add(mem.id);
+            workCount[mem.id]++;
+            filled++;
+          }
+        }
         if(filled < req){
           lastWarnings.push(`${m+1}/${d}: 夜勤看護師が${filled}/${req}人`);
         }
