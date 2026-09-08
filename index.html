@@ -3474,11 +3474,14 @@
     }
 
     const addRow = document.createElement('div');
-    addRow.style.cssText = `display:flex; gap:8px; margin-bottom:12px;`;
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = '名前を入力';
-    input.style.cssText = `flex:1;`;
+    addRow.style.cssText = `display:flex; gap:8px; margin-bottom:12px; align-items:flex-start;`;
+    // 複数人まとめて追加できるよう、改行・カンマ区切りで複数名を貼り付けられるテキストエリアにしている
+    // (1行の入力欄だと貼り付け時に改行が失われ、まとめて追加したつもりが1人分の名前として
+    // 結合されてしまう、という不具合の対応)。
+    const input = document.createElement('textarea');
+    input.rows = 2;
+    input.placeholder = '名前を入力(複数人まとめて追加する場合は改行かカンマ区切りで入力)';
+    input.style.cssText = `flex:1; resize:vertical; font-family:inherit; border:1px solid var(--color-border-tertiary); border-radius:var(--border-radius-md); padding:8px 10px; font-size:13px; background:var(--color-background-primary); color:var(--color-text-primary);`;
     const roleSelect = document.createElement('select');
     roleSelect.style.cssText = `width:110px;`;
     [['nurse','看護師'],['care','介護福祉士'],['subchief','副主任'],['chief','師長'],['clerk','病棟クラーク']].forEach(([k,l]) => {
@@ -3489,12 +3492,14 @@
     const addBtn = document.createElement('button');
     addBtn.textContent = '追加';
     addBtn.addEventListener('click', () => {
-      const val = input.value.trim();
-      if(val){
+      const names = input.value.split(/[\n,、]+/).map(s => s.trim()).filter(Boolean);
+      if(names.length){
         // 病棟クラークは師長と同じく夜勤対象外の扱いなので、他の役職と違いnightOKを既定でfalseにする
         // (希望入力のタイル一覧に「夜勤」を出さないため。availableShiftOptionsFor参照)。
         const defaultNightOK = roleSelect.value !== 'chief' && roleSelect.value !== 'clerk';
-        members.push({ id: 'mem'+Date.now(), name: val, role: roleSelect.value, leader:false, nightLeader:false, nightOK: defaultNightOK, newbie:false, parttime:false, ikuji:false, nightOnly:false });
+        names.forEach((val, i) => {
+          members.push({ id: `mem${Date.now()}_${i}`, name: val, role: roleSelect.value, leader:false, nightLeader:false, nightOK: defaultNightOK, newbie:false, parttime:false, ikuji:false, nightOnly:false });
+        });
         input.value = '';
         renderList();
         renderPairSelects();
