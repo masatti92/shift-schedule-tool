@@ -3345,8 +3345,13 @@
           else nameInput.value = mem.name;
           nameInput.style.cssText = nameInputBaseStyle;
         });
+        // 日本語入力(IME)で変換を確定するEnterキーまで拾ってしまうと、変換途中で
+        // 次の欄に移動してしまい入力が崩れるため、IME変換中のEnterは無視する。
+        let nameInputComposing = false;
+        nameInput.addEventListener('compositionstart', () => { nameInputComposing = true; });
+        nameInput.addEventListener('compositionend', () => { nameInputComposing = false; });
         nameInput.addEventListener('keydown', (e) => {
-          if(e.key !== 'Enter') return;
+          if(e.key !== 'Enter' || nameInputComposing || e.isComposing || e.keyCode === 229) return;
           e.preventDefault();
           // Enterキーで確定しつつ、次の人の名前欄へ続けて移動できるようにする
           // (複数人分をキーボードだけでテンポよく入力できるように)。
@@ -3530,7 +3535,14 @@
     }
     // ボタンを押さなくても、名前を入力してEnterキーで追加できるようにする
     // (1つの入力欄+ボタンという見た目から、Enterで反映されると期待する人が多いため)。
-    input.addEventListener('keydown', (e) => { if(e.key === 'Enter') addMemberFromInput(); });
+    // 日本語入力(IME)で変換を確定するEnterキーまで拾わないよう、変換中は無視する。
+    let addInputComposing = false;
+    input.addEventListener('compositionstart', () => { addInputComposing = true; });
+    input.addEventListener('compositionend', () => { addInputComposing = false; });
+    input.addEventListener('keydown', (e) => {
+      if(e.key !== 'Enter' || addInputComposing || e.isComposing || e.keyCode === 229) return;
+      addMemberFromInput();
+    });
     addBtn.addEventListener('click', () => {
       addMemberFromInput();
     });
