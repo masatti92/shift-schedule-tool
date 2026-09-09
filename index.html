@@ -3356,6 +3356,9 @@
         const delBtn = document.createElement('button');
         delBtn.setAttribute('aria-label', `${mem.name}を削除`);
         delBtn.style.cssText = `padding:2px 6px; flex-shrink:0;`;
+        // Tabキーで名前欄を順に移動できるよう、削除ボタン自体はタブ移動の対象から外す
+        // (クリックでは今まで通り操作できる)。
+        delBtn.tabIndex = -1;
         delBtn.textContent = '削除';
         let armed = false;
         let armTimer = null;
@@ -3406,6 +3409,11 @@
             cb.type = 'checkbox';
             cb.checked = !!mem[prop];
             cb.style.cssText = `width:19px; height:19px; cursor:pointer; flex-shrink:0;`;
+            // Tabキーで名前欄を順に移動できるよう、チェックボックスはタブ移動の対象から外す
+            // (クリックでは今まで通り操作できる)。これが原因で、複数人の名前をTabで
+            // 順番に入力していく途中からチェックボックスにフォーカスが移ってしまい、
+            // 「2人目以降の名前を入力しても反映されない」という不具合が起きていた。
+            cb.tabIndex = -1;
             cb.addEventListener('change', () => {
               mem[prop] = cb.checked;
               renderInputGrid();
@@ -3429,6 +3437,7 @@
             tendencyLab.appendChild(document.createTextNode('夜勤傾向:'));
             const tendencySelect = document.createElement('select');
             tendencySelect.style.cssText = `font-size:13px; padding:6px 8px; min-height:32px;`;
+            tendencySelect.tabIndex = -1; // 他のチェックボックスと同様、タブ移動の対象から外す
             [['normal','普通'],['more','多め'],['less','少なめ']].forEach(([val,label]) => {
               const opt = document.createElement('option');
               opt.value = val; opt.textContent = label;
