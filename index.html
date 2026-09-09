@@ -3283,7 +3283,7 @@
     const roles = [['all','全員'],['chief','師長'],['subchief','副主任'],['nurse','看護師'],['care','介護福祉士'],['clerk','病棟クラーク']];
 
     const list = document.createElement('div');
-    list.style.cssText = `display:flex; flex-direction:column; gap:6px; margin-bottom:12px; max-height:280px; overflow-y:auto;`;
+    list.style.cssText = `display:flex; flex-direction:column; gap:10px; margin-bottom:12px; max-height:340px; overflow-y:auto;`;
 
     function renderList(){
       list.innerHTML = '';
@@ -3291,7 +3291,7 @@
       let dragSrcId = null;
       filtered.forEach(mem => {
         const row = document.createElement('div');
-        row.style.cssText = `display:flex; flex-direction:column; gap:4px; padding:6px 8px; border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-md);`;
+        row.style.cssText = `display:flex; flex-direction:column; gap:8px; padding:10px; border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-md);`;
         row.draggable = true;
         row.addEventListener('dragstart', (e) => {
           dragSrcId = mem.id;
@@ -3328,15 +3328,19 @@
         nameInput.type = 'text';
         nameInput.value = mem.name;
         nameInput.dataset.memberId = mem.id;
-        nameInput.style.cssText = `font-size:13px; flex:1; border:0.5px solid transparent; background:transparent; padding:2px 0; color:var(--color-text-primary); min-width:0;`;
+        // 編集可能なことが一目で分かるよう、フォーカスの有無にかかわらず常に枠線を表示し、
+        // タップ・クリックしやすいよう文字サイズ・余白も広めにしている。
+        const nameInputBaseStyle = `font-size:15px; flex:1; border:1px solid var(--color-border-tertiary); border-radius:var(--border-radius-md); background:var(--color-background-primary); padding:8px 10px; color:var(--color-text-primary); min-width:0; min-height:40px;`;
+        const nameInputFocusStyle = `${nameInputBaseStyle} border-color:var(--color-accent); box-shadow:0 0 0 3px var(--color-accent-soft);`;
+        nameInput.style.cssText = nameInputBaseStyle;
         nameInput.addEventListener('focus', () => {
-          nameInput.style.cssText += `border-color:var(--color-border-tertiary); background:var(--color-background-primary); padding:2px 6px; border-radius:var(--border-radius-md);`;
+          nameInput.style.cssText = nameInputFocusStyle;
         });
         nameInput.addEventListener('blur', () => {
           const val = nameInput.value.trim();
           if(val){ mem.name = val; renderInputGrid(); renderPairList(); renderPairSelects(); if(hasDataForMonth(currentDate.getFullYear(), currentDate.getMonth())){ renderResultGrid(); renderSummary(); } saveToStorage(); }
           else nameInput.value = mem.name;
-          nameInput.style.cssText = `font-size:13px; flex:1; border:0.5px solid transparent; background:transparent; padding:2px 0; color:var(--color-text-primary); min-width:0;`;
+          nameInput.style.cssText = nameInputBaseStyle;
         });
         nameInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') nameInput.blur(); });
 
@@ -3390,15 +3394,15 @@
         // (常に平日日勤・土日休みの既定パターンで、夜勤には入らない)、設定欄は表示しない。
         if(mem.role !== 'chief' && mem.role !== 'clerk'){
           const flagsRow = document.createElement('div');
-          flagsRow.style.cssText = `display:flex; gap:10px; font-size:11px; color:var(--color-text-secondary); flex-wrap:wrap;`;
+          flagsRow.style.cssText = `display:flex; gap:16px; row-gap:10px; font-size:13px; color:var(--color-text-secondary); flex-wrap:wrap; align-items:center;`;
 
           const mkCheck = (label, prop) => {
             const lab = document.createElement('label');
-            lab.style.cssText = `display:flex; align-items:center; gap:3px;`;
+            lab.style.cssText = `display:flex; align-items:center; gap:6px; cursor:pointer; min-height:28px;`;
             const cb = document.createElement('input');
             cb.type = 'checkbox';
             cb.checked = !!mem[prop];
-            cb.style.cssText = `width:auto;`;
+            cb.style.cssText = `width:19px; height:19px; cursor:pointer; flex-shrink:0;`;
             cb.addEventListener('change', () => {
               mem[prop] = cb.checked;
               renderInputGrid();
@@ -3418,10 +3422,10 @@
             // 夜勤傾向: 自動割り振りで夜勤回数を意図的に多め/少なめに寄せたいスタッフ用。
             // 夜勤専従は月上限回数で別管理のため、ここでの設定は効果がない。
             const tendencyLab = document.createElement('label');
-            tendencyLab.style.cssText = `display:flex; align-items:center; gap:3px;`;
+            tendencyLab.style.cssText = `display:flex; align-items:center; gap:6px;`;
             tendencyLab.appendChild(document.createTextNode('夜勤傾向:'));
             const tendencySelect = document.createElement('select');
-            tendencySelect.style.cssText = `font-size:11px; padding:1px 2px;`;
+            tendencySelect.style.cssText = `font-size:13px; padding:6px 8px; min-height:32px;`;
             [['normal','普通'],['more','多め'],['less','少なめ']].forEach(([val,label]) => {
               const opt = document.createElement('option');
               opt.value = val; opt.textContent = label;
