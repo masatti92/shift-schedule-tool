@@ -3271,6 +3271,9 @@
   function openMembersModal(focusMemberId){
     overlay.style.display = 'flex';
     modalContent.innerHTML = '';
+    // パソコンでの利用が基本のため、既定の幅(360px)だとチェックボックス群が
+    // 折り返して縦に詰まってしまう。横に余裕を持たせて1行に収まりやすくする。
+    modalContent.style.width = '620px';
 
     const title = document.createElement('p');
     title.style.cssText = `font-weight:500; font-size:15px; margin:0 0 8px;`;
@@ -3394,7 +3397,7 @@
         // (常に平日日勤・土日休みの既定パターンで、夜勤には入らない)、設定欄は表示しない。
         if(mem.role !== 'chief' && mem.role !== 'clerk'){
           const flagsRow = document.createElement('div');
-          flagsRow.style.cssText = `display:flex; gap:16px; row-gap:10px; font-size:13px; color:var(--color-text-secondary); flex-wrap:wrap; align-items:center;`;
+          flagsRow.style.cssText = `display:flex; gap:24px; row-gap:10px; font-size:13px; color:var(--color-text-secondary); flex-wrap:wrap; align-items:center;`;
 
           const mkCheck = (label, prop) => {
             const lab = document.createElement('label');
