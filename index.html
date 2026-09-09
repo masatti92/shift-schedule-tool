@@ -3345,7 +3345,16 @@
           else nameInput.value = mem.name;
           nameInput.style.cssText = nameInputBaseStyle;
         });
-        nameInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') nameInput.blur(); });
+        nameInput.addEventListener('keydown', (e) => {
+          if(e.key !== 'Enter') return;
+          e.preventDefault();
+          // Enterキーで確定しつつ、次の人の名前欄へ続けて移動できるようにする
+          // (複数人分をキーボードだけでテンポよく入力できるように)。
+          const inputs = Array.from(list.querySelectorAll('input[data-member-id]'));
+          const next = inputs[inputs.indexOf(nameInput) + 1];
+          nameInput.blur();
+          if(next){ next.focus(); next.select(); } // 選択状態にして、そのまま上書き入力できるようにする
+        });
 
         const roleSpan = document.createElement('span');
         roleSpan.style.cssText = `font-size:13px; color:var(--color-text-secondary); white-space:nowrap; flex-shrink:0;`;
