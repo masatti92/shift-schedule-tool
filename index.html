@@ -3495,7 +3495,7 @@
     });
     const addBtn = document.createElement('button');
     addBtn.textContent = '追加';
-    addBtn.addEventListener('click', () => {
+    function addMemberFromInput(){
       const val = input.value.trim();
       if(val){
         // 病棟クラークは師長と同じく夜勤対象外の扱いなので、他の役職と違いnightOKを既定でfalseにする
@@ -3503,11 +3503,18 @@
         const defaultNightOK = roleSelect.value !== 'chief' && roleSelect.value !== 'clerk';
         members.push({ id: 'mem'+Date.now(), name: val, role: roleSelect.value, leader:false, nightLeader:false, nightOK: defaultNightOK, newbie:false, parttime:false, ikuji:false, nightOnly:false });
         input.value = '';
+        input.focus();
         renderList();
         renderPairSelects();
         renderInputGrid();
         saveToStorage();
       }
+    }
+    // ボタンを押さなくても、名前を入力してEnterキーで追加できるようにする
+    // (1つの入力欄+ボタンという見た目から、Enterで反映されると期待する人が多いため)。
+    input.addEventListener('keydown', (e) => { if(e.key === 'Enter') addMemberFromInput(); });
+    addBtn.addEventListener('click', () => {
+      addMemberFromInput();
     });
     addRow.appendChild(input);
     addRow.appendChild(roleSelect);
